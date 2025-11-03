@@ -1,23 +1,11 @@
 import { Page, expect } from '@playwright/test';
 
-export class ProdutosPage {
+export class ProductPage {
   readonly page: Page;
 
   constructor(page: Page) {
     this.page = page;
   }
-
-
-//   async getVisibleProductTitles() {
-//     const cards = this.page.locator('[data-test-id^="product-card-"]');
-//     const count = await cards.count();
-//     const titles: string[] = [];
-//     for (let i = 0; i < count; i++) {
-//       const title = await cards.nth(i).locator('h5, .card-title').first().textContent();
-//       if (title) titles.push(title.trim());
-//     }
-//     return titles;
-//   }
 
   async countProductCards() {
     return await this.page.locator('[data-test-id^="product-card-"]').count();
