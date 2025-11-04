@@ -55,23 +55,30 @@ export class LoginPage {
   await emailInput.fill(email);
   await this.page.click('button[type="submit"]');
 
-  const validationMessage = await emailInput.evaluate(
-    (el: HTMLInputElement) => el.validationMessage
-  );
-
-  expect(validationMessage).toContain("@");
-  expect(validationMessage).toContain("endereço de e-mail");
+  // Use auto-retry assertion with custom matcher
+  await expect(async () => {
+    const validationMessage = await emailInput.evaluate(
+      (el: HTMLInputElement) => el.validationMessage
+    );
+    expect(validationMessage).toContain("@");
+    // Accept both English and Portuguese validation messages
+    expect(validationMessage.toLowerCase()).toMatch(/email|e-mail/);
+  }).toPass();
 }
 
 async validateRequiredFieldMessages() {
   const emailInput = this.page.locator('[data-test-id="login-email"]');
   await emailInput.fill('');
   await this.page.click('button[type="submit"]');
-  const validationMessage = await emailInput.evaluate(
-    (el: HTMLInputElement) => el.validationMessage
-  );
-  expect(validationMessage).toContain("Preenchao este campo.");
-
+  
+  // Use auto-retry assertion
+  await expect(async () => {
+    const validationMessage = await emailInput.evaluate(
+      (el: HTMLInputElement) => el.validationMessage
+    );
+    // Accept both English and Portuguese validation messages
+    expect(validationMessage.toLowerCase()).toMatch(/fill|preencha/);
+  }).toPass();
   }
 
 

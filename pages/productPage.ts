@@ -14,8 +14,7 @@ export class ProductPage {
   async ensureProductListVisible() {
     const cards = this.page.locator('[data-test-id^="product-card-"]');
     await expect(cards.first()).toBeVisible();
-    const count = await cards.count();
-    expect(count).toBeGreaterThan(0);
+    await expect(cards).not.toHaveCount(0);
   }
 
   async applyCategoryFilter(category: string) {
@@ -29,8 +28,9 @@ export class ProductPage {
     await this.clearFilters();
     await this.applyCategoryFilter(category);
     
-    const selected = await this.page.locator('[data-test-id="category-filter"]').inputValue();
-    expect(selected).toBe(category);
+    // Use auto-retry assertion
+    await expect(this.page.locator('[data-test-id="category-filter"]')).toHaveValue(category);
+    
     const after = await this.countProductCards();
     expect(after).toBeLessThanOrEqual(before);
   }
@@ -46,8 +46,10 @@ export class ProductPage {
     await this.clearFilters();
     const before = await this.countProductCards();
     await this.applySortOrder(orderKey);
-    const selected = await this.page.locator('[data-test-id="sort-order"]').inputValue();
-    expect(selected).toBe(orderKey);
+    
+    // Use auto-retry assertion
+    await expect(this.page.locator('[data-test-id="sort-order"]')).toHaveValue(orderKey);
+    
     const after = await this.countProductCards();
     expect(after).toBeLessThanOrEqual(before);
   }
@@ -72,10 +74,11 @@ export class ProductPage {
     await this.clearFilters();
     await this.applyCategoryFilter(category);
     await this.applySortOrder(sortKey);
-    const selectedCategory = await this.page.locator('[data-test-id="category-filter"]').inputValue();
-    const selectedSort = await this.page.locator('[data-test-id="sort-order"]').inputValue();
-    expect(selectedCategory).toBe(category);
-    expect(selectedSort).toBe(sortKey);
+    
+    // Use auto-retry assertions
+    await expect(this.page.locator('[data-test-id="category-filter"]')).toHaveValue(category);
+    await expect(this.page.locator('[data-test-id="sort-order"]')).toHaveValue(sortKey);
+    
     const noResults = await this.isNoResultsVisible();
     const cards = await this.countProductCards();
     expect(noResults || cards > 0).toBeTruthy();

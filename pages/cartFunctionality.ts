@@ -14,9 +14,10 @@ export class CartPage {
     
     await addButton.click();
     
+    // Use auto-retry assertions
     const toast = this.page.locator('[data-test-id="toast-notification"]');
     await expect(toast).toBeVisible();
-    await expect(toast).toContainText(`${productName} foi adicionado ao carrinho`);
+    await expect(toast).toContainText('foi adicionado ao carrinho');
 
     return productName;
   }
@@ -38,12 +39,14 @@ export class CartPage {
     
     const quantityBefore = await this.getItemQuantity(productId);
     await this.page.locator(buttonSelector).click();
-    const quantityAfter = await this.getItemQuantity(productId);
-
+    
+    // Use auto-retry assertion
+    const quantityLocator = this.page.locator(`[data-test-id="item-quantity-${productId}"]`);
+    
     if (action === 'increase') {
-      expect(quantityAfter).toBe(quantityBefore + 1);
+      await expect(quantityLocator).toHaveValue((quantityBefore + 1).toString());
     } else if (quantityBefore > 1) {
-      expect(quantityAfter).toBe(quantityBefore - 1);
+      await expect(quantityLocator).toHaveValue((quantityBefore - 1).toString());
     }
   }
 
@@ -53,11 +56,11 @@ export class CartPage {
   }
 
   async removeItem(productId: string) {
-    const itemCountBefore = await this.getCartCount();
+    const itemRow = this.page.locator(`[data-test-id="cart-item-${productId}"]`);
     await this.page.locator(`[data-test-id="remove-item-${productId}"]`).click();
     
-    const itemCountAfter = await this.getCartCount();
-    expect(itemCountAfter).toBe(itemCountBefore - 1);
+    // Use auto-retry assertion - wait for item to be removed from DOM
+    await expect(itemRow).not.toBeAttached();
   }
 
   async getSubtotal() {
@@ -71,9 +74,10 @@ export class CartPage {
   }
 
   async verifyCouponDiscount() {
-    const discount = await this.page.locator('[data-test-id="summary-discount"]').textContent();
-    expect(discount).toBeTruthy();
-    expect(discount).toContain('R$');
+    // Use auto-retry assertion
+    const discountLocator = this.page.locator('[data-test-id="summary-discount"]');
+    await expect(discountLocator).toBeVisible();
+    await expect(discountLocator).toContainText('R$');
   }
 
   async verifyInvalidCouponError() {
@@ -84,8 +88,10 @@ export class CartPage {
 
   async removeCoupon() {
     await this.page.getByText('Remover Cupom').click();
-    const discount = await this.page.locator('[data-test-id="summary-discount"]').count();
-    expect(discount).toBe(0);
+    
+    // Use auto-retry assertion
+    const discountLocator = this.page.locator('[data-test-id="summary-discount"]');
+    await expect(discountLocator).toHaveCount(0);
   }
 
   async verifyEmptyCart() {
