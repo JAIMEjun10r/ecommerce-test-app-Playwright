@@ -14,7 +14,6 @@ export class CartPage {
     
     await addButton.click();
     
-    // Use auto-retry assertions
     const toast = this.page.locator('[data-test-id="toast-notification"]');
     await expect(toast).toBeVisible();
     await expect(toast).toContainText('foi adicionado ao carrinho');
@@ -40,7 +39,7 @@ export class CartPage {
     const quantityBefore = await this.getItemQuantity(productId);
     await this.page.locator(buttonSelector).click();
     
-    // Use auto-retry assertion
+
     const quantityLocator = this.page.locator(`[data-test-id="item-quantity-${productId}"]`);
     
     if (action === 'increase') {
@@ -59,7 +58,6 @@ export class CartPage {
     const itemRow = this.page.locator(`[data-test-id="cart-item-${productId}"]`);
     await this.page.locator(`[data-test-id="remove-item-${productId}"]`).click();
     
-    // Use auto-retry assertion - wait for item to be removed from DOM
     await expect(itemRow).not.toBeAttached();
   }
 
@@ -74,7 +72,6 @@ export class CartPage {
   }
 
   async verifyCouponDiscount() {
-    // Use auto-retry assertion
     const discountLocator = this.page.locator('[data-test-id="summary-discount"]');
     await expect(discountLocator).toBeVisible();
     await expect(discountLocator).toContainText('R$');
@@ -89,7 +86,6 @@ export class CartPage {
   async removeCoupon() {
     await this.page.getByText('Remover Cupom').click();
     
-    // Use auto-retry assertion
     const discountLocator = this.page.locator('[data-test-id="summary-discount"]');
     await expect(discountLocator).toHaveCount(0);
   }
