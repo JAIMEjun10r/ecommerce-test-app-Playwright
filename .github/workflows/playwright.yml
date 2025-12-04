@@ -19,17 +19,11 @@ on:
         default: 'all'
 
 jobs:
-  test:
-    name: 🧪 Test - ${{ matrix.test-suite.name }}
-    timeout-minutes: 60
+  login-tests:
+    name: 🔐 Login Tests
+    timeout-minutes: 30
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        test-suite: 
-          - { name: 'Login', file: 'tests/e2e/login.spec.ts', emoji: '🔐' }
-          - { name: 'Products', file: 'tests/e2e/products.spec.ts', emoji: '🛍️' }
-          - { name: 'Cart', file: 'tests/e2e/cartFunctionality.spec.ts', emoji: '🛒' }
+    if: github.event.inputs.test_suite == 'all' || github.event.inputs.test_suite == 'login' || github.event.inputs.test_suite == ''
     
     steps:
       - name: 📥 Checkout repository
@@ -54,24 +48,12 @@ jobs:
           cd app
           npm ci
           npm run dev &
-          npx wait-on http://localhost:3000
+          npx wait-on http://localhost:3000 --timeout 60000
         env:
           CI: true
       
-      - name: ${{ matrix.test-suite.emoji }} Run ${{ matrix.test-suite.name }} Tests
-        run: |
-          if [ "${{ github.event.inputs.test_suite }}" = "all" ] || [ "${{ github.event.inputs.test_suite }}" = "" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
-          elif [ "${{ github.event.inputs.test_suite }}" = "login" ] && [ "${{ matrix.test-suite.file }}" = "tests/e2e/login.spec.ts" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
-          elif [ "${{ github.event.inputs.test_suite }}" = "products" ] && [ "${{ matrix.test-suite.file }}" = "tests/e2e/products.spec.ts" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
-          elif [ "${{ github.event.inputs.test_suite }}" = "cart" ] && [ "${{ matrix.test-suite.file }}" = "tests/e2e/cartFunctionality.spec.ts" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
-          else
-            echo "Skipping ${{ matrix.test-suite.name }} tests"
-            exit 0
-          fi
+      - name: 🔐 Run Login Tests
+        run: npx playwright test tests/e2e/login.spec.ts --project=chromium
         env:
           CI: true
       
@@ -79,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-${{ matrix.test-suite.name }}
+          name: playwright-report-login
           path: playwright-report/
           retention-days: 30
       
@@ -87,6 +69,114 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: screenshots-${{ matrix.test-suite.name }}
+          name: screenshots-login
+          path: test-results/
+          retention-days: 7
+  
+  products-tests:
+    name: 🛍️ Products Tests
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_suite == 'all' || github.event.inputs.test_suite == 'products' || github.event.inputs.test_suite == ''
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🎭 Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      
+      - name: 🚀 Start Application
+        run: |
+          cd app
+          npm ci
+          npm run dev &
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          CI: true
+      
+      - name: 🛍️ Run Products Tests
+        run: npx playwright test tests/e2e/products.spec.ts --project=chromium
+        env:
+          CI: true
+      
+      - name: 📊 Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-products
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: 📸 Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots-products
+          path: test-results/
+          retention-days: 7
+  
+  cart-tests:
+    name: 🛒 Cart Tests
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_suite == 'all' || github.event.inputs.test_suite == 'cart' || github.event.inputs.test_suite == ''
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🎭 Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      
+      - name: 🚀 Start Application
+        run: |
+          cd app
+          npm ci
+          npm run dev &
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          CI: true
+      
+      - name: 🛒 Run Cart Tests
+        run: npx playwright test tests/e2e/cartFunctionality.spec.ts --project=chromium
+        env:
+          CI: true
+      
+      - name: 📊 Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-cart
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: 📸 Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots-cart
           path: test-results/
           retention-days: 7
