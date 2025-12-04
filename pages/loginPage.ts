@@ -55,13 +55,11 @@ export class LoginPage {
   await emailInput.fill(email);
   await this.page.click('button[type="submit"]');
 
-  // Use auto-retry assertion with custom matcher
   await expect(async () => {
     const validationMessage = await emailInput.evaluate(
       (el: HTMLInputElement) => el.validationMessage
     );
     expect(validationMessage).toContain("@");
-    // Accept both English and Portuguese validation messages
     expect(validationMessage.toLowerCase()).toMatch(/email|e-mail/);
   }).toPass();
 }
@@ -71,12 +69,11 @@ async validateRequiredFieldMessages() {
   await emailInput.fill('');
   await this.page.click('button[type="submit"]');
   
-  // Use auto-retry assertion
   await expect(async () => {
     const validationMessage = await emailInput.evaluate(
       (el: HTMLInputElement) => el.validationMessage
     );
-    // Accept both English and Portuguese validation messages
+    
     expect(validationMessage.toLowerCase()).toMatch(/fill|preencha/);
   }).toPass();
   }

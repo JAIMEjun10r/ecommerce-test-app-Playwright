@@ -46,8 +46,7 @@ export class ProductPage {
     await this.clearFilters();
     const before = await this.countProductCards();
     await this.applySortOrder(orderKey);
-    
-    // Use auto-retry assertion
+  
     await expect(this.page.locator('[data-test-id="sort-order"]')).toHaveValue(orderKey);
     
     const after = await this.countProductCards();
@@ -75,7 +74,6 @@ export class ProductPage {
     await this.applyCategoryFilter(category);
     await this.applySortOrder(sortKey);
     
-    // Use auto-retry assertions
     await expect(this.page.locator('[data-test-id="category-filter"]')).toHaveValue(category);
     await expect(this.page.locator('[data-test-id="sort-order"]')).toHaveValue(sortKey);
     
