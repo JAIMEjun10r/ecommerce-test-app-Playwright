@@ -11,15 +11,6 @@ on:
         description: 'Excluir testes que contenham (ex: "skip")'
         required: false
         type: string
-      browser:
-        description: 'Navegador'
-        required: true
-        type: choice
-        options:
-          - 'chromium'
-          - 'firefox'
-          - 'webkit'
-        default: 'chromium'
       workers:
         description: 'Número de workers paralelos'
         required: false
@@ -62,8 +53,8 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
       
-      - name: 🎭 Install Playwright
-        run: npx playwright install --with-deps ${{ github.event.inputs.browser }}
+      - name: 🎭 Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       
       - name: 🚀 Start App
         run: |
@@ -74,7 +65,7 @@ jobs:
       
       - name: 🧪 Run Filtered Tests
         run: |
-          CMD="npx playwright test --project=${{ github.event.inputs.browser }}"
+          CMD="npx playwright test --project=chromium"
           CMD="$CMD --workers=${{ github.event.inputs.workers }}"
           CMD="$CMD --retries=${{ github.event.inputs.retries }}"
           
@@ -102,7 +93,7 @@ jobs:
         run: |
           echo "## 🏷️ Custom Test Run Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Browser:** ${{ github.event.inputs.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Browser:** Chromium" >> $GITHUB_STEP_SUMMARY
           echo "**Workers:** ${{ github.event.inputs.workers }}" >> $GITHUB_STEP_SUMMARY
           echo "**Retries:** ${{ github.event.inputs.retries }}" >> $GITHUB_STEP_SUMMARY
           if [ -n "${{ github.event.inputs.grep }}" ]; then

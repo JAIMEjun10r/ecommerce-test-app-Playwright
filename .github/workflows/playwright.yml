@@ -17,24 +17,10 @@ on:
           - 'products'
           - 'cart'
         default: 'all'
-      browser:
-        description: 'Navegador para executar'
-        required: true
-        type: choice
-        options:
-          - 'chromium'
-          - 'firefox'
-          - 'webkit'
-          - 'all'
-        default: 'chromium'
-      tags:
-        description: 'Tags para filtrar testes (ex: @smoke, @regression)'
-        required: false
-        type: string
 
 jobs:
   test:
-    name: 🧪 Test - ${{ matrix.test-suite }}
+    name: 🧪 Test - ${{ matrix.test-suite.name }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     strategy:
@@ -60,8 +46,8 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
       
-      - name: 🎭 Install Playwright Browsers
-        run: npx playwright install --with-deps chromium firefox webkit
+      - name: 🎭 Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       
       - name: 🚀 Start Application
         run: |
@@ -75,13 +61,13 @@ jobs:
       - name: ${{ matrix.test-suite.emoji }} Run ${{ matrix.test-suite.name }} Tests
         run: |
           if [ "${{ github.event.inputs.test_suite }}" = "all" ] || [ "${{ github.event.inputs.test_suite }}" = "" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=${{ github.event.inputs.browser || 'chromium' }}
+            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
           elif [ "${{ github.event.inputs.test_suite }}" = "login" ] && [ "${{ matrix.test-suite.file }}" = "tests/e2e/login.spec.ts" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=${{ github.event.inputs.browser || 'chromium' }}
+            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
           elif [ "${{ github.event.inputs.test_suite }}" = "products" ] && [ "${{ matrix.test-suite.file }}" = "tests/e2e/products.spec.ts" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=${{ github.event.inputs.browser || 'chromium' }}
+            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
           elif [ "${{ github.event.inputs.test_suite }}" = "cart" ] && [ "${{ matrix.test-suite.file }}" = "tests/e2e/cartFunctionality.spec.ts" ]; then
-            npx playwright test ${{ matrix.test-suite.file }} --project=${{ github.event.inputs.browser || 'chromium' }}
+            npx playwright test ${{ matrix.test-suite.file }} --project=chromium
           else
             echo "Skipping ${{ matrix.test-suite.name }} tests"
             exit 0

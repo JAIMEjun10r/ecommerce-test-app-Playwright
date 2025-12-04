@@ -1,18 +1,8 @@
-name: All E2E Tests
+name: 🎭 All E2E Tests
 
 on:
   workflow_dispatch:
     inputs:
-      browser:
-        description: 'Navegador para executar'
-        required: true
-        type: choice
-        options:
-          - 'chromium'
-          - 'firefox'
-          - 'webkit'
-          - 'all-browsers'
-        default: 'chromium'
       headed:
         description: 'Executar em modo headed (visível)'
         required: false
@@ -27,38 +17,34 @@ on:
 
 jobs:
   all-tests:
-    name: ${{ matrix.browser }} - All Tests
+    name: 🎭 All E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: ${{ github.event.inputs.browser == 'all-browsers' && fromJSON('["chromium", "firefox", "webkit"]') || fromJSON(format('["{0}"]', github.event.inputs.browser || 'chromium')) }}
     
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
       
-      - name: Setup Node.js 18
+      - name: 🟢 Setup Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
       
-      - name: Install test dependencies
+      - name: 📦 Install test dependencies
         run: npm ci
       
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: 🎭 Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       
-      - name: Install app dependencies
+      - name: 📦 Install app dependencies
         run: |
           cd app
           npm ci
       
-      - name: Start E-commerce Application
+      - name: 🚀 Start E-commerce Application
         run: |
           cd app
           npm run dev &
@@ -66,25 +52,21 @@ jobs:
         env:
           NODE_ENV: test
       
-      - name: Run All E2E Tests - ${{ matrix.browser }}
+      - name: 🧪 Run All E2E Tests
         run: |
           if [ "${{ github.event.inputs.headed }}" = "true" ]; then
-            npx playwright test --project=${{ matrix.browser }} --headed
+            npx playwright test --project=chromium --headed
           else
-            npx playwright test --project=${{ matrix.browser }}
+            npx playwright test --project=chromium
           fi
         env:
           CI: true
       
-      - name: Generate HTML Report
-        if: always()
-        run: npx playwright show-report
-      
-      - name: Upload Playwright Report
+      - name: 📊 Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report-${{ matrix.browser }}
+          name: playwright-report-chromium
           path: playwright-report/
           retention-days: 30
       
@@ -92,17 +74,19 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: test-results-${{ matrix.browser }}
+          name: test-results-chromium
           path: test-results/
           retention-days: 7
       
-      - name: Test Summary
+      - name: 📈 Test Summary
         if: always()
         run: |
-          echo "## Playwright Test Results - ${{ matrix.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎭 Playwright Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Browser:** Chromium" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f "playwright-report/index.html" ]; then
-            echo "Report generated successfully" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Report generated successfully" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Report generation failed" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Report generation failed" >> $GITHUB_STEP_SUMMARY
           fi

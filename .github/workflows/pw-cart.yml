@@ -2,16 +2,6 @@ name: 🛒 Cart Tests
 
 on:
   workflow_dispatch:
-    inputs:
-      browser:
-        description: 'Navegador'
-        required: true
-        type: choice
-        options:
-          - 'chromium'
-          - 'firefox'
-          - 'webkit'
-        default: 'chromium'
   push:
     branches: [ main, master ]
     paths:
@@ -39,8 +29,8 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
       
-      - name: 🎭 Install Playwright
-        run: npx playwright install --with-deps ${{ github.event.inputs.browser || 'chromium' }}
+      - name: 🎭 Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       
       - name: 🚀 Start E-commerce App
         run: |
@@ -50,13 +40,13 @@ jobs:
           npx wait-on http://localhost:3000 --timeout 60000
       
       - name: 🧪 Run Cart Tests
-        run: npx playwright test tests/e2e/cartFunctionality.spec.ts --project=${{ github.event.inputs.browser || 'chromium' }}
+        run: npx playwright test tests/e2e/cartFunctionality.spec.ts --project=chromium
       
       - name: 📊 Upload Report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cart-report-${{ github.event.inputs.browser || 'chromium' }}
+          name: cart-report-chromium
           path: playwright-report/
           retention-days: 30
       
