@@ -1,0 +1,113 @@
+name: 🏷️ Tagged Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      grep:
+        description: 'Filtro de testes (ex: "should login", "cart")'
+        required: false
+        type: string
+      grep_invert:
+        description: 'Excluir testes que contenham (ex: "skip")'
+        required: false
+        type: string
+      browser:
+        description: 'Navegador'
+        required: true
+        type: choice
+        options:
+          - 'chromium'
+          - 'firefox'
+          - 'webkit'
+        default: 'chromium'
+      workers:
+        description: 'Número de workers paralelos'
+        required: false
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+        default: '2'
+      retries:
+        description: 'Número de tentativas em caso de falha'
+        required: false
+        type: choice
+        options:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+        default: '1'
+
+jobs:
+  tagged-tests:
+    name: 🏷️ Custom Test Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: 🟢 Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      
+      - name: 📦 Install dependencies
+        run: npm ci
+      
+      - name: 🎭 Install Playwright
+        run: npx playwright install --with-deps ${{ github.event.inputs.browser }}
+      
+      - name: 🚀 Start App
+        run: |
+          cd app
+          npm ci
+          npm run dev &
+          npx wait-on http://localhost:3000 --timeout 60000
+      
+      - name: 🧪 Run Filtered Tests
+        run: |
+          CMD="npx playwright test --project=${{ github.event.inputs.browser }}"
+          CMD="$CMD --workers=${{ github.event.inputs.workers }}"
+          CMD="$CMD --retries=${{ github.event.inputs.retries }}"
+          
+          if [ -n "${{ github.event.inputs.grep }}" ]; then
+            CMD="$CMD --grep '${{ github.event.inputs.grep }}'"
+          fi
+          
+          if [ -n "${{ github.event.inputs.grep_invert }}" ]; then
+            CMD="$CMD --grep-invert '${{ github.event.inputs.grep_invert }}'"
+          fi
+          
+          echo "🚀 Running: $CMD"
+          eval $CMD
+      
+      - name: 📊 Upload Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tagged-tests-report
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: 📝 Test Summary
+        if: always()
+        run: |
+          echo "## 🏷️ Custom Test Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Browser:** ${{ github.event.inputs.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Workers:** ${{ github.event.inputs.workers }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Retries:** ${{ github.event.inputs.retries }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.inputs.grep }}" ]; then
+            echo "**Filter:** ${{ github.event.inputs.grep }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "${{ github.event.inputs.grep_invert }}" ]; then
+            echo "**Exclude:** ${{ github.event.inputs.grep_invert }}" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -17,6 +17,7 @@
   "homepage": "https://github.com/JAIMEjun10r/ecommerce-test-app-Playwright#readme",
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "@types/node": "^24.8.1"
+    "@types/node": "^24.8.1",
+    "wait-on": "^8.0.0"
   }
 }

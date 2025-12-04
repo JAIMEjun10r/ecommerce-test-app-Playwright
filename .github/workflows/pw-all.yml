@@ -1,0 +1,108 @@
+name: All E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Navegador para executar'
+        required: true
+        type: choice
+        options:
+          - 'chromium'
+          - 'firefox'
+          - 'webkit'
+          - 'all-browsers'
+        default: 'chromium'
+      headed:
+        description: 'Executar em modo headed (visível)'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    - cron: '0 2 * * *' # Executa diariamente às 2h AM
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  all-tests:
+    name: ${{ matrix.browser }} - All Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: ${{ github.event.inputs.browser == 'all-browsers' && fromJSON('["chromium", "firefox", "webkit"]') || fromJSON(format('["{0}"]', github.event.inputs.browser || 'chromium')) }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      
+      - name: Install test dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      
+      - name: Install app dependencies
+        run: |
+          cd app
+          npm ci
+      
+      - name: Start E-commerce Application
+        run: |
+          cd app
+          npm run dev &
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          NODE_ENV: test
+      
+      - name: Run All E2E Tests - ${{ matrix.browser }}
+        run: |
+          if [ "${{ github.event.inputs.headed }}" = "true" ]; then
+            npx playwright test --project=${{ matrix.browser }} --headed
+          else
+            npx playwright test --project=${{ matrix.browser }}
+          fi
+        env:
+          CI: true
+      
+      - name: Generate HTML Report
+        if: always()
+        run: npx playwright show-report
+      
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 30
+      
+      - name: 📸 Upload Screenshots & Videos
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 7
+      
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Playwright Test Results - ${{ matrix.browser }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "playwright-report/index.html" ]; then
+            echo "Report generated successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Report generation failed" >> $GITHUB_STEP_SUMMARY
+          fi
